@@ -35,7 +35,7 @@ def get_response_from_groq(message):
         )
         ai_response = chat_completion.choices[0].message.content
         conversation_history.append({"role": "assistant", "content": ai_response})
-        if len(conversation_history) > 11:
+        if len(conversation_history) > 26:
             conversation_history = conversation_history[-50:]
         return ai_response
     except Exception as e:
@@ -46,6 +46,8 @@ def text_to_speech(text):
     engine.say(text)
     engine.runAndWait()
 
+import time
+
 def speech_to_text():
     recognizer = sr.Recognizer()
     microphone = sr.Microphone()
@@ -55,8 +57,12 @@ def speech_to_text():
         recognizer.adjust_for_ambient_noise(source)
         st.write("Jake.ai is listening:")
 
-        # Continuously listen until silence or timeout
-        audio = recognizer.listen(source, timeout=30, phrase_time_limit=1000)
+        start_time = time.time()
+        audio = recognizer.listen(source, timeout=30)
+        end_time = time.time()
+
+        if end_time - start_time > 26   :
+            return "Sorry, you took too long to speak."
 
     try:
         return recognizer.recognize_google(audio)
@@ -64,8 +70,8 @@ def speech_to_text():
         return "Sorry, I could not understand you."
     except sr.RequestError:
         return "Sorry, there was an error with the request."
-
 def main():
+    st.set_page_config(page_title="Jake.ai", page_icon=":robot:", layout="wide")
     st.title("Jake.ai - Conversational AI")
     user_input = st.button("Start Conversation")
 
@@ -85,5 +91,6 @@ def main():
 
             # Convert AI response to speech
             text_to_speech(ai_response)
+
 if __name__ == "__main__":
     main()
