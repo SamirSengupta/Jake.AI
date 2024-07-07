@@ -1,13 +1,15 @@
 import os
 import speech_recognition as sr
 import pyttsx3
-from groq import Groq
+from groq import Groq as Jake
 from secret import key, prompt
+import streamlit as st
+
 # Set your Groq API key here if not using environment variable
 API_KEY = key
 
 # Initialize Groq client
-client = Groq(api_key=API_KEY)
+client = Jake(api_key=API_KEY)
 
 # Initialize conversation history
 conversation_history = [
@@ -23,7 +25,7 @@ def get_response_from_groq(message):
     # Update conversation history with formatted user input
     formatted_message = f"<{message}>"
     conversation_history.append({"role": "user", "content": formatted_message})
-    if len(conversation_history) > 11:  # Keeping initial system prompt + 5 pairs (user and AI responses)
+    if len(conversation_history) > 11:  # Keeping initial system prompt + 25 pairs (user and AI responses)
         conversation_history = conversation_history[-50:]
 
     try:
@@ -51,35 +53,37 @@ def speech_to_text():
     with microphone as source:
         # Adjust for ambient noise and improve accuracy
         recognizer.adjust_for_ambient_noise(source)
-        print("Please say something:")
+        st.write("Jake.ai is listening:")
 
         # Continuously listen until silence or timeout
-        audio = recognizer.listen(source, timeout=10, phrase_time_limit=1000)
+        audio = recognizer.listen(source, timeout=30, phrase_time_limit=1000)
 
     try:
         return recognizer.recognize_google(audio)
     except sr.UnknownValueError:
-        return "Sorry, I could not understand the audio."
+        return "Sorry, I could not understand you."
     except sr.RequestError:
-        return "Sorry, there was an error with the speech recognition service."
+        return "Sorry, there was an error with the request."
 
 def main():
-    while True:
-        # Capture speech from user
-        user_input = speech_to_text()
-        print(f"You said: {user_input}")
+    st.title("Jake.ai - Conversational AI")
+    user_input = st.button("Start Conversation")
 
-        # Check if user wants to exit
-        if user_input.lower() == "code exit":
-            print("Exiting the program.")
-            break
+    if user_input:
+        while True:
+            user_text = speech_to_text()
+            st.write(f"You said: {user_text}")
 
-        # Get response from Groq
-        ai_response = get_response_from_groq(user_input)
-        print(f"AI response: {ai_response}")
+            # Check if user wants to exit
+            if user_text.lower() == "code exit":
+                st.write("Good Bye! Jake.ai is exiting.")
+                break
 
-        # Convert AI response to speech
-        text_to_speech(ai_response)
+            # Get response from Groq
+            ai_response = get_response_from_groq(user_text)
+            st.write(f"AI response: {ai_response}")
 
+            # Convert AI response to speech
+            text_to_speech(ai_response)
 if __name__ == "__main__":
     main()
