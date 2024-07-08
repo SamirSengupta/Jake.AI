@@ -4,6 +4,7 @@ import pyttsx3
 from groq import Groq as Jake
 from secret import key, prompt
 import streamlit as st
+import time
 
 # Set your Groq API key here if not using environment variable
 API_KEY = key
@@ -19,7 +20,7 @@ conversation_history = [
     }
 ]
 
-def get_response_from_groq(message):
+def get_response_from_groq(message, model):
     global conversation_history
 
     # Update conversation history with formatted user input
@@ -31,7 +32,7 @@ def get_response_from_groq(message):
     try:
         chat_completion = client.chat.completions.create(
             messages=conversation_history,
-            model="mixtral-8x7b-32768",
+            model=model,
         )
         ai_response = chat_completion.choices[0].message.content
         conversation_history.append({"role": "assistant", "content": ai_response})
@@ -45,8 +46,6 @@ def text_to_speech(text):
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
-
-import time
 
 def speech_to_text():
     recognizer = sr.Recognizer()
@@ -70,9 +69,20 @@ def speech_to_text():
         return "Sorry, I could not understand you."
     except sr.RequestError:
         return "Sorry, there was an error with the request."
+
 def main():
     st.set_page_config(page_title="Jake.ai", page_icon=":robot:", layout="wide")
     st.title("Jake.ai - Conversational AI")
+
+    # Create a sidebar with options
+    with st.sidebar:
+        model_options = {
+            "Mixtral 8x7b (Max Tokens)": "mixtral-8x7b-32768",
+            "Gemma2 9b (Ideal for QA)": "gemma2-9b-it",
+            "LLaMA3 70b (Most Accurate)": "llama3-70b-8192"
+        }
+        selected_model = st.selectbox("Select Model", list(model_options.keys()))
+
     user_input = st.button("Start Conversation")
 
     if user_input:
@@ -86,7 +96,7 @@ def main():
                 break
 
             # Get response from Groq
-            ai_response = get_response_from_groq(user_text)
+            ai_response = get_response_from_groq(user_text, model_options[selected_model])
             st.write(f"AI response: {ai_response}")
 
             # Convert AI response to speech
