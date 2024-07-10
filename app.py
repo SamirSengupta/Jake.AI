@@ -13,12 +13,7 @@ API_KEY = key
 client = Jake(api_key=API_KEY)
 
 # Initialize conversation history
-conversation_history = [
-    {
-        "role": "system",
-        "content": prompt
-    }
-]
+conversation_history = [{"role": "system", "content": prompt}]
 
 def get_response_from_groq(message, model):
     global conversation_history
@@ -26,7 +21,7 @@ def get_response_from_groq(message, model):
     # Update conversation history with formatted user input
     formatted_message = f"<{message}>"
     conversation_history.append({"role": "user", "content": formatted_message})
-    if len(conversation_history) > 11:  # Keeping initial system prompt + 25 pairs (user and AI responses)
+    if len(conversation_history) > 26:  # Keeping initial system prompt + 25 pairs (user and AI responses)
         conversation_history = conversation_history[-50:]
 
     try:
@@ -60,7 +55,7 @@ def speech_to_text():
         audio = recognizer.listen(source, timeout=30)
         end_time = time.time()
 
-        if end_time - start_time > 26   :
+        if end_time - start_time > 26:
             return "Sorry, you took too long to speak."
 
     try:
@@ -74,33 +69,43 @@ def main():
     st.set_page_config(page_title="Jake.ai", page_icon=":robot:", layout="wide")
     st.title("Jake.ai - Conversational AI")
 
-    # Create a sidebar with options
-    with st.sidebar:
-        model_options = {
-            "Mixtral 8x7b (Max Tokens)": "mixtral-8x7b-32768",
-            "Gemma2 9b (Ideal for QA)": "gemma2-9b-it",
-            "LLaMA3 70b (Most Accurate)": "llama3-70b-8192"
-        }
-        selected_model = st.selectbox("Select Model", list(model_options.keys()))
+    tabs = st.tabs(["Conversation", "Benchmark"])
 
-    user_input = st.button("Start Conversation")
+    # Conversation tab
+    with tabs[0]:
+        # Create a sidebar with options
+        with st.sidebar:
+            model_options = {
+                "Mixtral 8x7b (Max Tokens)": "mixtral-8x7b-32768",
+                "Gemma2 9b (Ideal for QA)": "gemma2-9b-it",
+                "LLaMA3 70b (Most Accurate)": "llama3-70b-8192",
+            }
+            selected_model = st.selectbox("Select Model", list(model_options.keys()))
 
-    if user_input:
-        while True:
-            user_text = speech_to_text()
-            st.write(f"You said: {user_text}")
+        user_input = st.button("Start Conversation")
 
-            # Check if user wants to exit
-            if user_text.lower() == "code exit":
-                st.write("Good Bye! Jake.ai is exiting.")
-                break
+        if user_input:
+            while True:
+                user_text = speech_to_text()
+                st.write(f"You said: {user_text}")
 
-            # Get response from Groq
-            ai_response = get_response_from_groq(user_text, model_options[selected_model])
-            st.write(f"AI response: {ai_response}")
+                # Check if user wants to exit
+                if user_text.lower() == "code exit":
+                    ai_response = get_response_from_groq("exit", model_options[selected_model])
+                    st.write(f"AI response: {ai_response}")
+                    text_to_speech(ai_response)
+                    break
+                # Get response from Groq
+                ai_response = get_response_from_groq(user_text, model_options[selected_model])
+                st.write(f"AI response: {ai_response}")
 
-            # Convert AI response to speech
-            text_to_speech(ai_response)
+                # Convert AI response to speech
+                text_to_speech(ai_response)
+
+    # Benchmark tab
+    with tabs[1]:
+        st.image("benchmark.jpg", caption="Model Performance Benchmark", use_column_width=True)
+        st.markdown("This image shows the performance benchmark of the models used in this app.")
 
 if __name__ == "__main__":
     main()
