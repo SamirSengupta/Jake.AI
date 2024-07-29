@@ -52,19 +52,14 @@ def speech_to_text():
         recognizer.adjust_for_ambient_noise(source)
         st.write("Jake is listening:")
 
-        start_time = time.time()
-        audio = recognizer.listen(source, timeout=None)
-        end_time = time.time()
-
-        if end_time - start_time > 26:
-            return "Sorry, you took too long to speak."
-
-    try:
-        return recognizer.recognize_google(audio)
-    except sr.UnknownValueError:
-        return "Sorry, I could not understand you."
-    except sr.RequestError:
-        return "Sorry, there was an error with the request."
+        while True:
+            audio = recognizer.listen(source, timeout=None)
+            try:
+                return recognizer.recognize_google(audio)
+            except sr.UnknownValueError:
+                return "Sorry, I could not understand you."
+            except sr.RequestError:
+                return "Sorry, there was an error with the request."
 
 def main():
     st.set_page_config(page_title="Jake.ai", page_icon=":robot:", layout="wide")
@@ -80,6 +75,7 @@ def main():
                 "Mixtral 8x7b (Mistral)": "mixtral-8x7b-32768",
                 "Gemma2 9b (Google)": "gemma2-9b-it",
                 "LLaMA3 70b (Meta)": "llama3-70b-8192",
+                "LLaMA3.1 8b (Beta)" : "llama-3.1-8b-instant",
             }
             selected_model = st.selectbox("Select Model", list(model_options.keys()))
 
