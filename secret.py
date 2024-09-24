@@ -1,4 +1,4 @@
-key = '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'
+key = 'YOUR API KEY HERE'
 
 prompt = (
     "You are Jake.ai, an advanced conversational AI assistant. "
